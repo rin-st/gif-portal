@@ -15,7 +15,6 @@ const baseAccount = Keypair.fromSecretKey(secret);
 
 const programID = new PublicKey(idl.metadata.address);
 
-// Set our network to devent.
 const network = clusterApiUrl('devnet');
 
 const opts = {
@@ -88,6 +87,7 @@ const App = () => {
 			});
 			console.log('GIF sucesfully sent to program', inputValue);
 
+			setInputValue('');
 			await getGifList();
 		} catch (error) {
 			console.log('Error sending GIF:', error);
@@ -101,6 +101,7 @@ const App = () => {
 			window.solana,
 			opts.preflightCommitment
 		);
+		console.log(provider.wallet.publicKey, '<<< wallet');
 		return provider;
 	};
 
@@ -124,6 +125,26 @@ const App = () => {
 			await getGifList();
 		} catch (error) {
 			console.log('Error creating BaseAccount account:', error);
+		}
+	};
+
+	const upvoteGif = (gifAddr) => async () => {
+		console.log('Gif link:', gifAddr);
+		try {
+			const provider = getProvider();
+
+			const program = new Program(idl, programID, provider);
+
+			await program.rpc.upvoteGif(gifAddr, {
+				accounts: {
+					baseAccount: baseAccount.publicKey,
+				},
+			});
+			console.log('GIF sucesfully sent to program', inputValue);
+
+			await getGifList();
+		} catch (error) {
+			console.log('Error sending GIF:', error);
 		}
 	};
 
@@ -169,7 +190,19 @@ const App = () => {
 						{/* We use index as the key instead, also, the src is now item.gifLink */}
 						{gifList.map((item, index) => (
 							<div className="gif-item" key={index}>
-								<img src={item.gifLink} />
+								<img src={item.gifLink} alt="gif-link" />
+								<div className="gif-from-address">
+									from:&nbsp;<span>{item.userAddress.toString()}</span>
+								</div>
+								<div className="gif-likes">
+									<button
+										className="heart-button"
+										onClick={upvoteGif(item.gifLink)}
+									>
+										❤️
+									</button>
+									&nbsp;{item.likes}
+								</div>
 							</div>
 						))}
 					</div>
